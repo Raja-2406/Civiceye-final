@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import ImageModal from '../../components/common/ImageModal';
 import { 
   BarChart3, 
   Search, 
@@ -19,6 +20,7 @@ import {
   ArrowUpDown,
   Zap,
   CheckCheck,
+  Maximize2
 } from 'lucide-react';
 
 export default function CommandCenter() {
@@ -60,6 +62,9 @@ export default function CommandCenter() {
   const [verifyComplaint, setVerifyComplaint] = useState(null);
   const [verifyRemarks, setVerifyRemarks] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Enlarged Image Modal state
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   const handleVerifyAndClose = async (e) => {
     e.preventDefault();
@@ -189,7 +194,7 @@ export default function CommandCenter() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Banner (Figure 5.4 in Report) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-200 gap-4">
         <div>
@@ -634,20 +639,68 @@ export default function CommandCenter() {
                   </p>
                 )}
 
-                {verifyComplaint.verificationReport?.proofImageUrl && (
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold block mb-1">
-                      On-Site Ground Proof Image:
-                    </span>
-                    <div className="h-32 rounded-lg overflow-hidden border border-slate-200">
-                      <img
-                        src={verifyComplaint.verificationReport.proofImageUrl}
-                        alt="Proof"
-                        className="w-full h-full object-cover"
-                      />
+                {/* Inspection Comparison Photos: Before (Citizen) vs After (Verifier Proof) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {verifyComplaint.imageUrl && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                          Before: Citizen Photo
+                        </span>
+                        <span className="text-[9px] text-brand-600 font-semibold">🔍 Enlarge</span>
+                      </div>
+                      <div
+                        onClick={() => setEnlargedImage({
+                          url: verifyComplaint.imageUrl,
+                          title: `Before: Citizen Incident (${verifyComplaint.title})`,
+                          subtitle: verifyComplaint.trackingId
+                        })}
+                        className="h-28 rounded-xl overflow-hidden border border-slate-200 cursor-zoom-in group relative shadow-sm hover:border-brand-400 transition"
+                        title="Click to Enlarge Citizen Photo"
+                      >
+                        <img
+                          src={verifyComplaint.imageUrl}
+                          alt="Citizen incident"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        />
+                        <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white space-x-1">
+                          <Maximize2 className="w-4 h-4" />
+                          <span className="text-[10px] font-semibold">Enlarge</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {verifyComplaint.verificationReport?.proofImageUrl && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">
+                          After: Verifier Ground Proof
+                        </span>
+                        <span className="text-[9px] text-emerald-600 font-semibold">🔍 Enlarge</span>
+                      </div>
+                      <div
+                        onClick={() => setEnlargedImage({
+                          url: verifyComplaint.verificationReport.proofImageUrl,
+                          title: `After: Field Resolution Proof (${verifyComplaint.trackingId})`,
+                          subtitle: `Completed by ${verifyComplaint.assignedVerifierName || 'Field Officer'}`
+                        })}
+                        className="h-28 rounded-xl overflow-hidden border border-emerald-200 cursor-zoom-in group relative shadow-sm hover:border-emerald-400 transition"
+                        title="Click to Enlarge Proof Photo"
+                      >
+                        <img
+                          src={verifyComplaint.verificationReport.proofImageUrl}
+                          alt="Proof"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        />
+                        <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white space-x-1">
+                          <Maximize2 className="w-4 h-4" />
+                          <span className="text-[10px] font-semibold">Enlarge</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -685,6 +738,14 @@ export default function CommandCenter() {
           </div>
         </div>
       )}
+      {/* Enlarged Image Lightbox */}
+      <ImageModal
+        isOpen={!!enlargedImage}
+        imageUrl={enlargedImage?.url}
+        title={enlargedImage?.title}
+        subtitle={enlargedImage?.subtitle}
+        onClose={() => setEnlargedImage(null)}
+      />
     </div>
   );
 }

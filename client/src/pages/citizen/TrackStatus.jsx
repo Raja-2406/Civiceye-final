@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import ImageModal from '../../components/common/ImageModal';
 import { 
   Search, 
   CheckCircle2, 
@@ -18,6 +19,7 @@ import {
   CheckCircle,
   RotateCcw,
   CheckCheck,
+  Maximize2
 } from 'lucide-react';
 
 const LIFECYCLE_STAGES = ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'VERIFIED_AND_CLOSED'];
@@ -43,6 +45,9 @@ export default function TrackStatus() {
   const [reopenReason, setReopenReason] = useState('');
   const [isReopening, setIsReopening] = useState(false);
   const [reopenSuccess, setReopenSuccess] = useState('');
+
+  // Enlarged Image Lightbox State
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   const handleReopenComplaint = async (e) => {
     e.preventDefault();
@@ -127,7 +132,7 @@ export default function TrackStatus() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5 sm:space-y-6">
       {/* Header and Search */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -300,15 +305,67 @@ export default function TrackStatus() {
               {/* Uploaded Evidence Image */}
               {complaint.imageUrl && (
                 <div className="space-y-1.5">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Evidence Attached
-                  </h4>
-                  <div className="rounded-xl overflow-hidden border border-slate-200 max-w-sm">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
+                      <FileText className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Citizen Incident Evidence</span>
+                    </h4>
+                    <span className="text-[10px] text-brand-600 font-semibold">
+                      🔍 Click to enlarge
+                    </span>
+                  </div>
+                  <div
+                    onClick={() => setEnlargedImage({
+                      url: complaint.imageUrl,
+                      title: `Citizen Evidence: ${complaint.title}`,
+                      subtitle: `${complaint.trackingId} • ${complaint.formattedAddress || ''}`
+                    })}
+                    className="relative rounded-xl overflow-hidden border border-slate-200 max-w-sm cursor-zoom-in group shadow-sm hover:border-brand-400 transition"
+                    title="Click to Enlarge Evidence Photo"
+                  >
                     <img
                       src={complaint.imageUrl}
                       alt="Incident evidence"
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
                     />
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white space-x-1.5">
+                      <Maximize2 className="w-5 h-5 drop-shadow" />
+                      <span className="text-xs font-semibold drop-shadow">Enlarge Photo</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* On-Site Field Resolution Proof Photo if available */}
+              {complaint.verificationReport?.proofImageUrl && (
+                <div className="space-y-1.5 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center space-x-1.5">
+                      <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Field Resolution Work Proof</span>
+                    </h4>
+                    <span className="text-[10px] text-emerald-700 font-semibold">
+                      🔍 Click to enlarge
+                    </span>
+                  </div>
+                  <div
+                    onClick={() => setEnlargedImage({
+                      url: complaint.verificationReport.proofImageUrl,
+                      title: `Field Resolution Proof: ${complaint.trackingId}`,
+                      subtitle: `Completed by ${complaint.verificationReport.verifierName || 'Field Officer'}`
+                    })}
+                    className="relative rounded-xl overflow-hidden border border-emerald-200 max-w-sm cursor-zoom-in group shadow-sm hover:border-emerald-400 transition"
+                    title="Click to Enlarge Proof Photo"
+                  >
+                    <img
+                      src={complaint.verificationReport.proofImageUrl}
+                      alt="Resolution ground proof"
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white space-x-1.5">
+                      <Maximize2 className="w-5 h-5 drop-shadow" />
+                      <span className="text-xs font-semibold drop-shadow">Enlarge Proof Photo</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -582,6 +639,14 @@ export default function TrackStatus() {
           </div>
         </div>
       )}
+      {/* Enlarged Image Lightbox */}
+      <ImageModal
+        isOpen={!!enlargedImage}
+        imageUrl={enlargedImage?.url}
+        title={enlargedImage?.title}
+        subtitle={enlargedImage?.subtitle}
+        onClose={() => setEnlargedImage(null)}
+      />
     </div>
   );
 }

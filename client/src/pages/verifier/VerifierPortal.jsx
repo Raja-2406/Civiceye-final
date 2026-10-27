@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import ImageModal from '../../components/common/ImageModal';
+import CameraCaptureModal from '../../components/common/CameraCaptureModal';
 import { 
   CheckSquare, 
   MapPin, 
@@ -15,7 +17,8 @@ import {
   Play,
   ArrowRight,
   ShieldAlert,
-  CheckCheck
+  CheckCheck,
+  Maximize2
 } from 'lucide-react';
 
 export default function VerifierPortal() {
@@ -32,6 +35,10 @@ export default function VerifierPortal() {
   const [proofPreview, setProofPreview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Enlarged Image Modal & Camera States
+  const [enlargedImage, setEnlargedImage] = useState(null);
+  const [isVerifierCameraOpen, setIsVerifierCameraOpen] = useState(false);
 
   // Department Head Remarks Details Modal
   const [remarksModalOpen, setRemarksModalOpen] = useState(false);
@@ -124,7 +131,7 @@ export default function VerifierPortal() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200">
         <div>
@@ -232,8 +239,20 @@ export default function VerifierPortal() {
 
                   {/* Citizen Attached Evidence Photo */}
                   {c.imageUrl && (
-                    <div className="h-28 rounded-xl overflow-hidden border border-slate-100">
-                      <img src={c.imageUrl} alt="Citizen report evidence" className="w-full h-full object-cover" />
+                    <div
+                      onClick={() => setEnlargedImage({
+                        url: c.imageUrl,
+                        title: `Citizen Evidence: ${c.title}`,
+                        subtitle: `${c.trackingId} • ${c.formattedAddress || ''}`
+                      })}
+                      className="relative h-28 rounded-xl overflow-hidden border border-slate-200 cursor-zoom-in group shadow-sm hover:border-brand-400 transition"
+                      title="Click to Enlarge Evidence Photo"
+                    >
+                      <img src={c.imageUrl} alt="Citizen report evidence" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white space-x-1.5">
+                        <Maximize2 className="w-4 h-4" />
+                        <span className="text-[11px] font-semibold">Enlarge</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -374,19 +393,82 @@ export default function VerifierPortal() {
 
               {/* Upload Ground Proof Photo (Recommended on Resolved) */}
               {inspectionTargetStatus === 'RESOLVED' && (
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    Upload On-Site Ground Proof Photo (Cloudinary) *
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProofChange}
-                    className="text-xs text-slate-500"
-                  />
-                  {proofPreview && (
-                    <div className="mt-2 w-24 h-24 rounded-lg overflow-hidden border border-slate-200">
-                      <img src={proofPreview} alt="Proof" className="w-full h-full object-cover" />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-700 block">
+                      Upload On-Site Ground Proof Photo (Cloudinary) *
+                    </label>
+                    {proofPreview && (
+                      <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        ✓ Proof Ready
+                      </span>
+                    )}
+                  </div>
+
+                  {!proofPreview ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsVerifierCameraOpen(true)}
+                        className="py-3 px-3 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+                      >
+                        <Camera className="w-4 h-4 text-brand-600" />
+                        <span>Take Live Photo</span>
+                      </button>
+
+                      <label className="py-3 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition cursor-pointer">
+                        <Upload className="w-4 h-4 text-slate-500" />
+                        <span>Choose File</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProofChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div
+                        onClick={() => setEnlargedImage({
+                          url: proofPreview,
+                          title: 'Verification Proof Preview',
+                          subtitle: selectedComplaint?.trackingId || ''
+                        })}
+                        className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-300 cursor-zoom-in group shrink-0"
+                        title="Click to Enlarge Proof"
+                      >
+                        <img src={proofPreview} alt="Proof" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-semibold text-slate-800 block truncate">
+                          {proofFile?.name || 'On-site Proof Photo'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setEnlargedImage({
+                            url: proofPreview,
+                            title: 'Verification Proof Preview',
+                            subtitle: selectedComplaint?.trackingId || ''
+                          })}
+                          className="text-[11px] text-brand-600 hover:text-brand-700 font-semibold underline"
+                        >
+                          Enlarge preview
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProofFile(null);
+                          setProofPreview('');
+                        }}
+                        className="text-xs text-rose-600 hover:text-rose-700 font-semibold px-2 py-1 bg-rose-50 rounded-lg border border-rose-200"
+                      >
+                        Remove
+                      </button>
                     </div>
                   )}
                 </div>
@@ -488,6 +570,24 @@ export default function VerifierPortal() {
           </div>
         </div>
       )}
+      {/* Live Camera Capture Modal for Verifier Ground Proof */}
+      <CameraCaptureModal
+        isOpen={isVerifierCameraOpen}
+        onCapture={(file, previewUrl) => {
+          setProofFile(file);
+          setProofPreview(previewUrl);
+        }}
+        onClose={() => setIsVerifierCameraOpen(false)}
+      />
+
+      {/* Enlarged Image Lightbox */}
+      <ImageModal
+        isOpen={!!enlargedImage}
+        imageUrl={enlargedImage?.url}
+        title={enlargedImage?.title}
+        subtitle={enlargedImage?.subtitle}
+        onClose={() => setEnlargedImage(null)}
+      />
     </div>
   );
 }

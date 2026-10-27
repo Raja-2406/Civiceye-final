@@ -65,7 +65,7 @@ export const calculateTextSimilarity = (textA = '', textB = '') => {
 
 /**
  * Intelligent Duplicate Detection Service
- * Retrieves complaints within 500m radius and computes semantic text similarity.
+ * Retrieves complaints within 10m radius and computes semantic text similarity.
  */
 export const checkDuplicateComplaint = async ({
   title,
@@ -74,7 +74,7 @@ export const checkDuplicateComplaint = async ({
   longitude,
   mainCategory,
   excludeId = null,
-  radiusMeters = 500,
+  radiusMeters = 10,
 }) => {
   const query = {
     status: { $in: ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS'] }, // active issues
@@ -148,7 +148,7 @@ export const checkDuplicateComplaint = async ({
   // Sort by closest distance
   nearbyComplaints.sort((a, b) => a.distanceMeters - b.distanceMeters);
 
-  // If similarity is above 0.55 and within 500m, flag as probable duplicate
+  // If similarity is above 0.55 and within 10m, flag as probable duplicate
   const isDuplicateFlagged = highestSimilarity >= 0.55 && matchedComplaint !== null;
 
   return {

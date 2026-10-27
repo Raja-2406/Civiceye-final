@@ -27,7 +27,7 @@ export default function DuplicateWarningModal({
               Potential Duplicate Complaint Detected
             </h3>
             <p className="text-xs text-amber-700 mt-0.5">
-              CivicEye Semantic & Geospatial Intelligence detected an existing active report within 500m of this location.
+              CivicEye Semantic & Geospatial Intelligence detected an existing active report within 10m of this location.
             </p>
           </div>
           <button

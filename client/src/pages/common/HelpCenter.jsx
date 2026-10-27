@@ -9,7 +9,7 @@ export default function HelpCenter() {
     },
     {
       q: 'How does Intelligent Duplicate Detection work?',
-      a: 'CivicEye combines geospatial proximity with semantic text embeddings. A 500-meter radius buffer is scanned around your coordinates, and incoming titles/descriptions are compared via cosine similarity. If an identical problem was already logged, the system warns you to prevent duplicate work orders.',
+      a: 'CivicEye combines geospatial proximity with semantic text embeddings. A 10-meter radius buffer is scanned around your coordinates, and incoming titles/descriptions are compared via cosine similarity. If an identical problem was already logged, the system warns you to prevent duplicate work orders.',
     },
     {
       q: 'What are the municipal Service Level Agreement (SLA) deadlines?',
@@ -22,7 +22,7 @@ export default function HelpCenter() {
   ];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5 sm:space-y-6">
       <div className="pb-4 border-b border-slate-200">
         <span className="text-[11px] font-bold tracking-wider uppercase text-brand-600 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded-md">
           Knowledge Base & Support

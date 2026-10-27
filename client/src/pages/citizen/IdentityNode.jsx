@@ -46,7 +46,7 @@ export default function IdentityNode() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5 sm:space-y-6">
       <div className="pb-4 border-b border-slate-200">
         <span className="text-[11px] font-bold tracking-wider uppercase text-brand-600 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded-md">
           Citizen Identity Node

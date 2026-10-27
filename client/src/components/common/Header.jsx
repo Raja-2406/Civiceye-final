@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth, DEMO_ACCOUNTS } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { 
   Bell, 
@@ -8,18 +8,16 @@ import {
   LogOut, 
   Shield, 
   UserCheck, 
-  Layers, 
-  Check, 
   Clock, 
-  AlertCircle 
+  AlertCircle,
+  Menu
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header() {
-  const { user, logout, switchRole } = useAuth();
+export default function Header({ onToggleMobileMenu }) {
+  const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
@@ -38,77 +36,52 @@ export default function Header() {
   });
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-40">
-      {/* Brand & System Status */}
-      <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
-            <Shield className="w-5 h-5" />
+    <header className="h-16 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-40">
+      {/* Brand & Mobile Hamburger Toggle */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Mobile Hamburger Toggle Button */}
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          className="p-2 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition md:hidden"
+          title="Open Navigation Menu"
+          aria-label="Open Navigation Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center space-x-2 sm:space-x-2.5">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 shrink-0">
+            <Shield className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg text-slate-900 tracking-tight">CivicEye</span>
-              <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-sky-50 text-brand-600 border border-brand-200">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <span className="font-bold text-base sm:text-lg text-slate-900 tracking-tight">CivicEye</span>
+              <span className="hidden xs:inline-block text-[9px] sm:text-[10px] font-semibold tracking-wider uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-sky-50 text-brand-600 border border-brand-200">
                 Municipal Core
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Bannari Amman Smart City Governance</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium hidden sm:block">
+              Bannari Amman Smart City Governance
+            </p>
           </div>
         </div>
       </div>
 
       {/* Universal Search (Tracking #CMP or keywords) */}
-      <form onSubmit={handleSearch} className="flex-1 max-w-md mx-8 relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+      <form onSubmit={handleSearch} className="flex-1 max-w-[140px] xs:max-w-xs sm:max-w-md mx-2 sm:mx-6 relative">
+        <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by #CMP tracking ID, locality, or keyword..."
-          className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-100/80 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all"
+          placeholder="Search #CMP ID..."
+          className="w-full pl-8 sm:pl-9 pr-3 sm:pr-4 py-1.5 text-xs bg-slate-100/80 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all"
         />
       </form>
 
-      {/* Right Controls: Role switcher, Date, Notifications, User Card */}
-      <div className="flex items-center space-x-4">
-        {/* Quick Role Switcher Pill (Great for demonstration & grading) */}
-        <div className="relative">
-          <button
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            className="flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/70 border border-slate-200 text-slate-700 transition"
-            title="Switch User Role for Testing"
-          >
-            <Layers className="w-3.5 h-3.5 text-brand-600" />
-            <span>Switch Role</span>
-          </button>
-
-          {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2">
-              <div className="px-3 py-1.5 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Test Role Credentials
-              </div>
-              {Object.entries(DEMO_ACCOUNTS).map(([key, acc]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    switchRole(key);
-                    setShowRoleMenu(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition ${
-                    user?.role === acc.role ? 'bg-sky-50 text-brand-700 font-semibold' : 'text-slate-700'
-                  }`}
-                >
-                  <div>
-                    <div>{acc.label}</div>
-                    <div className="text-[10px] text-slate-400">{acc.email}</div>
-                  </div>
-                  {user?.role === acc.role && <Check className="w-3.5 h-3.5 text-brand-600" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
+      {/* Right Controls: Notifications, User Profile & Session */}
+      <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
         {/* Current Date Display */}
         <div className="hidden xl:flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -131,7 +104,7 @@ export default function Header() {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2">
               <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-800">System Alerts</span>
                 {unreadCount > 0 && (
@@ -172,23 +145,23 @@ export default function Header() {
         </div>
 
         {/* User Card & Terminate Session */}
-        <div className="flex items-center pl-3 border-l border-slate-200 space-x-3">
-          <div className="text-right">
-            <div className="text-xs font-semibold text-slate-800">{user?.name || 'Guest User'}</div>
+        <div className="flex items-center pl-2 sm:pl-3 border-l border-slate-200 space-x-2 sm:space-x-3">
+          <div className="text-right hidden sm:block">
+            <div className="text-xs font-semibold text-slate-800 max-w-[120px] truncate">{user?.name || 'Citizen'}</div>
             <div className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
               {user?.role === 'dept_head'
                 ? 'Department Head'
                 : user?.role === 'verifier'
                 ? 'Field Verifier'
                 : user?.role === 'admin'
-                ? 'Super Administrator'
+                ? 'Super Admin'
                 : 'Citizen'}
             </div>
           </div>
           <button
             onClick={logout}
-            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-            title="Terminate Session"
+            className="p-2 sm:p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+            title="Terminate Session (Sign Out)"
           >
             <LogOut className="w-4 h-4" />
           </button>

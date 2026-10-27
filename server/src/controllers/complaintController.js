@@ -20,7 +20,7 @@ const generateTrackingId = async () => {
   return trackingId;
 };
 
-// Real-time pre-check for duplicates (500m radius + semantic similarity)
+// Real-time pre-check for duplicates (10m radius + semantic similarity)
 export const checkDuplicateLive = async (req, res) => {
   try {
     const { title, description, latitude, longitude, mainCategory, excludeId } = req.body;
@@ -36,7 +36,7 @@ export const checkDuplicateLive = async (req, res) => {
       longitude: parseFloat(longitude),
       mainCategory: mainCategory || 'Roads & Infrastructure',
       excludeId: excludeId || null,
-      radiusMeters: 500,
+      radiusMeters: 10,
     });
 
     res.status(200).json({
@@ -113,7 +113,7 @@ export const createComplaint = async (req, res) => {
       latitude: lat,
       longitude: lng,
       mainCategory: finalCategory,
-      radiusMeters: 500,
+      radiusMeters: 10,
     });
 
     // 4. Handle Uploaded Image Evidence (Cloudinary Cloud Storage)

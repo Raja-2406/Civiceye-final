@@ -3,9 +3,12 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  html, body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    min-height: 100%;
   }
 
   code, pre {

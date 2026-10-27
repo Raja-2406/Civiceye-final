@@ -1,11 +1,18 @@
-import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AppLayout() {
   const { user, loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Close mobile menu whenever location/route changes
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   if (loading) {
     return (
@@ -20,11 +27,11 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Header />
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+    <div className="min-h-screen bg-slate-50 flex flex-col antialiased">
+      <Header onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)} />
+      <div className="flex-1 flex overflow-hidden relative">
+        <Sidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+        <main className="flex-1 overflow-y-auto w-full min-w-0">
           <Outlet />
         </main>
       </div>

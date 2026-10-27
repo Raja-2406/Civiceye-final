@@ -47,16 +47,16 @@ function MarkerController({ position, setPosition, onLocationChange }) {
         eventHandlers={eventHandlers}
         position={position}
       />
-      {/* 500-meter duplicate detection circle around location */}
+      {/* 10-meter duplicate detection circle around location */}
       <Circle
         center={position}
-        radius={500}
+        radius={10}
         pathOptions={{
           color: '#0284c7',
           fillColor: '#38bdf8',
-          fillOpacity: 0.15,
-          weight: 1.5,
-          dashArray: '4, 4',
+          fillOpacity: 0.2,
+          weight: 2,
+          dashArray: '3, 3',
         }}
       />
     </>
@@ -249,7 +249,7 @@ export default function LocationPicker({
 
         {/* Radius note overlay */}
         <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-600 text-[10px] px-2.5 py-1 rounded-md shadow-sm z-[400]">
-          Blue dashed ring: 500m Duplicate Analysis Buffer
+          Blue dashed ring: 10m Duplicate Analysis Buffer
         </div>
       </div>
 

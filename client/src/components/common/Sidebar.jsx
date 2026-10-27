@@ -14,10 +14,12 @@ import {
   Cpu, 
   ShieldAlert,
   LogOut,
-  FolderGit2
+  FolderGit2,
+  X,
+  Shield
 } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const { user, logout } = useAuth();
   const role = user?.role || 'citizen';
 
@@ -60,9 +62,26 @@ export default function Sidebar() {
       ? adminNav 
       : citizenNav;
 
-  return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between h-[calc(100vh-4rem)] sticky top-16 border-r border-slate-800 shrink-0">
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full">
       <div className="py-5 px-3">
+        {/* Mobile Header with Close Button */}
+        <div className="flex items-center justify-between px-3 mb-4 md:hidden border-b border-slate-800 pb-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+              <Shield className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-white text-sm">CivicEye Navigation</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
         <div className="px-3 mb-4">
           <span className="text-[10px] font-semibold tracking-wider uppercase text-slate-400">
             {role === 'dept_head'
@@ -82,6 +101,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.name}
                 to={item.to}
+                onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium transition ${
                     isActive
@@ -119,6 +139,30 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <aside className="hidden md:flex w-64 bg-slate-900 text-slate-300 flex-col justify-between h-[calc(100vh-4rem)] sticky top-16 border-r border-slate-800 shrink-0">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Backdrop & Drawer */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+          onClick={onClose}
+        >
+          <div
+            className="w-72 max-w-[85vw] h-full bg-slate-900 text-slate-300 shadow-2xl flex flex-col justify-between animate-in slide-in-from-left duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

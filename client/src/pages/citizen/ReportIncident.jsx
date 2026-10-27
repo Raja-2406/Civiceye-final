@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import LocationPicker from '../../components/common/LocationPicker';
 import DuplicateWarningModal from '../../components/common/DuplicateWarningModal';
+import CameraCaptureModal from '../../components/common/CameraCaptureModal';
+import ImageModal from '../../components/common/ImageModal';
 import { 
   Sparkles, 
   Upload, 
+  Camera,
   MapPin, 
   AlertCircle, 
   ShieldCheck, 
@@ -14,7 +17,8 @@ import {
   FileText, 
   Image as ImageIcon,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
+  Maximize2
 } from 'lucide-react';
 
 const TAXONOMY_OPTIONS = {
@@ -78,6 +82,8 @@ export default function ReportIncident() {
   // Media
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [enlargedImageUrl, setEnlargedImageUrl] = useState('');
 
   // AI & Duplicate states
   const [isClassifying, setIsClassifying] = useState(false);
@@ -215,7 +221,7 @@ export default function ReportIncident() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200">
         <div>
@@ -306,7 +312,7 @@ export default function ReportIncident() {
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
                 <Radio className="w-3.5 h-3.5 text-brand-600" />
-                <span>Nearby Complaints (500m Radius)</span>
+                <span>Nearby Complaints (10m Radius)</span>
               </h4>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                 {nearbyComplaints.length} found
@@ -315,7 +321,7 @@ export default function ReportIncident() {
 
             {nearbyComplaints.length === 0 ? (
               <p className="text-xs text-slate-400 py-3 text-center">
-                No active complaints reported within 500m of this location. Your report is clean!
+                No active complaints reported within 10m of this location. Your report is clean!
               </p>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -460,47 +466,117 @@ export default function ReportIncident() {
               />
             </div>
 
-            {/* Media Evidence (JPG, PNG, WEBP, max 5MB) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-brand-600" />
-                <span>Media Evidence (Optional, max 5 MB)</span>
-              </label>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <label className="flex-1 w-full flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100/50 transition">
-                  <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                  <span className="text-xs font-medium text-slate-600">
-                    Click to select JPG, PNG or WEBP image
-                  </span>
-                  <span className="text-[10px] text-slate-400">Maximum file size 5 MB</span>
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.webp"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
+            {/* Media Evidence (Live Camera Capture or File Upload) */}
+            <div className="space-y-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-brand-600" />
+                  <span>Media Evidence (Live Camera or Gallery, max 5 MB)</span>
                 </label>
-
                 {imagePreview && (
-                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200 shrink-0">
-                    <img
-                      src={imagePreview}
-                      alt="Evidence preview"
-                      className="w-full h-full object-cover"
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    ✓ Photo Attached
+                  </span>
+                )}
+              </div>
+
+              {!imagePreview ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Option 1: Live Camera Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraOpen(true)}
+                    className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-brand-300 hover:border-brand-500 rounded-xl bg-brand-50/50 hover:bg-brand-50 text-brand-700 transition group cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-600 group-hover:scale-110 flex items-center justify-center mb-1.5 transition-transform">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-brand-900">
+                      📷 Take Live Photo
+                    </span>
+                    <span className="text-[10px] text-brand-600/80">
+                      Use device camera (Front/Back)
+                    </span>
+                  </button>
+
+                  {/* Option 2: Upload from Device / Gallery */}
+                  <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-xl bg-slate-50 hover:bg-slate-100/70 text-slate-600 transition group cursor-pointer">
+                    <div className="w-10 h-10 rounded-full bg-slate-200/70 text-slate-500 group-hover:scale-110 flex items-center justify-center mb-1.5 transition-transform">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-800">
+                      📁 Upload from Device
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      JPG, PNG, WEBP up to 5 MB
+                    </span>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp,image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
                     />
+                  </label>
+                </div>
+              ) : (
+                /* Attached Image Preview Card with Enlarge & Retake */
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div
+                      onClick={() => setEnlargedImageUrl(imagePreview)}
+                      className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 shadow-sm cursor-zoom-in group shrink-0"
+                      title="Click to Enlarge Photo"
+                    >
+                      <img
+                        src={imagePreview}
+                        alt="Evidence preview"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <Maximize2 className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-xs font-bold text-slate-800 truncate">
+                          {imageFile?.name || 'Live Captured Photo.jpg'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        {imageFile?.size ? `${(imageFile.size / (1024 * 1024)).toFixed(2)} MB • ` : ''}
+                        <button
+                          type="button"
+                          onClick={() => setEnlargedImageUrl(imagePreview)}
+                          className="text-brand-600 hover:text-brand-700 font-semibold underline underline-offset-2"
+                        >
+                          Enlarge preview
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraOpen(true)}
+                      className="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg shadow-sm transition flex items-center space-x-1"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Retake</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setImageFile(null);
                         setImagePreview('');
                       }}
-                      className="absolute top-1 right-1 bg-slate-900/80 text-white rounded-full p-1 text-[10px]"
+                      className="px-2.5 py-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-lg transition"
                     >
-                      ✕
+                      Remove
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -534,6 +610,25 @@ export default function ReportIncident() {
           handleSubmit();
         }}
         onClose={() => setDuplicateWarning(null)}
+      />
+
+      {/* Live Device Camera Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onCapture={(file, previewUrl) => {
+          setImageFile(file);
+          setImagePreview(previewUrl);
+        }}
+        onClose={() => setIsCameraOpen(false)}
+      />
+
+      {/* Enlarged Image Lightbox */}
+      <ImageModal
+        isOpen={!!enlargedImageUrl}
+        imageUrl={enlargedImageUrl}
+        title="Incident Evidence Preview"
+        subtitle={locationData.address || 'Geo-Tagged Photo'}
+        onClose={() => setEnlargedImageUrl('')}
       />
     </div>
   );

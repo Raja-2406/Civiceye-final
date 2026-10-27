@@ -42,33 +42,33 @@ export default function CitizenOverview() {
   const submitted = complaints.filter(c => c.status === 'SUBMITTED').length;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-brand-700 to-sky-700 text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-brand-700 to-sky-700 text-white rounded-2xl p-4 sm:p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs uppercase tracking-widest text-sky-200 font-semibold">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-sky-200 font-semibold">
             Citizen Grievance Portal
           </span>
-          <h1 className="text-xl font-bold mt-1">
+          <h1 className="text-lg sm:text-xl font-bold mt-1">
             Welcome back, {user?.name || 'Citizen'}
           </h1>
-          <p className="text-xs text-sky-100 mt-1 max-w-xl">
+          <p className="text-[11px] sm:text-xs text-sky-100 mt-1 max-w-xl">
             You are empowered as an active civic sensor for Sathyamangalam municipality. 
             Report road hazards, power faults, sanitation concerns and track their live resolution.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:space-x-3 shrink-0">
           <Link
             to="/report"
-            className="flex items-center space-x-2 px-4 py-2.5 bg-white text-brand-700 hover:bg-sky-50 font-semibold text-xs rounded-xl shadow transition"
+            className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-white text-brand-700 hover:bg-sky-50 font-semibold text-xs rounded-xl shadow transition"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Report New Issue</span>
           </Link>
           <Link
             to="/track"
-            className="flex items-center space-x-2 px-4 py-2.5 bg-brand-800/60 hover:bg-brand-800 text-white font-semibold text-xs rounded-xl border border-white/20 transition"
+            className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-brand-800/60 hover:bg-brand-800 text-white font-semibold text-xs rounded-xl border border-white/20 transition"
           >
             <Search className="w-4 h-4" />
             <span>Track Status</span>
