@@ -36,8 +36,10 @@ services:
         source: /*
         destination: /index.html
     envVars:
-      - key: VITE_API_URL
+      - key: BACKEND_HOST
         fromService:
           type: web
           name: civiceye-api
           property: host
+      - key: VITE_API_URL
+        value: https://${BACKEND_HOST}.onrender.com

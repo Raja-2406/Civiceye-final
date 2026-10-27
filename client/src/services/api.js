@@ -5,9 +5,19 @@ const rawApiUrl = import.meta.env.VITE_API_URL;
 let API_BASE_URL = '/api';
 
 if (rawApiUrl) {
-  const normalizedUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
-  API_BASE_URL = `${normalizedUrl.replace(/\/$/, '')}/api`;
+  let url = rawApiUrl.trim();
+  // If Render passed just the service slug (e.g. civiceye-api-k27d) without a dot/domain
+  if (!url.includes('.') && !url.includes('localhost')) {
+    url = `${url}.onrender.com`;
+  }
+  // Ensure https or http protocol
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  API_BASE_URL = `${url.replace(/\/$/, '')}/api`;
 }
+
+console.log('[CivicEye Client] API Base URL configured:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
