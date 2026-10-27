@@ -1,9 +1,13 @@
 import axios from 'axios';
 
 // In production, point to backend URL if specified; otherwise default to /api proxy
-const API_BASE_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : '/api';
+const rawApiUrl = import.meta.env.VITE_API_URL;
+let API_BASE_URL = '/api';
+
+if (rawApiUrl) {
+  const normalizedUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `https://${rawApiUrl}`;
+  API_BASE_URL = `${normalizedUrl.replace(/\/$/, '')}/api`;
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
