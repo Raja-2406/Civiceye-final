@@ -6,14 +6,22 @@ let API_BASE_URL = '/api';
 
 if (rawApiUrl) {
   let url = rawApiUrl.trim();
+
+  // If Render passed an unexpanded template string like https://${BACKEND_HOST}.onrender.com
+  if (url.includes('${')) {
+    url = url.replace(/\$\{.*?\}/g, 'civiceye-api-k27d');
+  }
+
   // If Render passed just the service slug (e.g. civiceye-api-k27d) without a dot/domain
   if (!url.includes('.') && !url.includes('localhost')) {
     url = `${url}.onrender.com`;
   }
+
   // Ensure https or http protocol
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `https://${url}`;
   }
+
   API_BASE_URL = `${url.replace(/\/$/, '')}/api`;
 }
 
