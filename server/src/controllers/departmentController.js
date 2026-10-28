@@ -2,7 +2,7 @@ import Complaint from '../models/Complaint.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { getSlaState } from '../services/priorityService.js';
-import { autoAssignComplaint } from '../services/dispatchService.js';
+import { autoAssignComplaint, drainUnassignedQueueForDepartment } from '../services/dispatchService.js';
 
 // Get Department Head Operations Queue & KPIs
 export const getDepartmentQueue = async (req, res) => {
@@ -301,6 +301,11 @@ export const verifyAndCloseComplaint = async (req, res) => {
       trackingId: complaint.trackingId,
     });
 
+    // Autonomous Queue Draining: As task is permanently closed, check if any unassigned backlog exists
+    drainUnassignedQueueForDepartment(complaint.department).catch(err =>
+      console.error('[Auto-Drain Trigger Error]', err.message)
+    );
+
     res.status(200).json({
       success: true,
       message: `Complaint #${complaint.trackingId} successfully verified and closed.`,
@@ -320,31 +325,17 @@ export const autoDispatchDepartmentQueue = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Department scope required.' });
     }
 
-    const unassignedComplaints = await Complaint.find({
-      department: departmentName,
-      assignedVerifier: null,
-      status: { $ne: 'CLOSED' },
-    });
+    const { dispatchedCount, remainingUnassigned, error } = await drainUnassignedQueueForDepartment(departmentName);
 
-    if (unassignedComplaints.length === 0) {
-      return res.status(200).json({
-        success: true,
-        message: 'No unassigned complaints found in this department.',
-        dispatchedCount: 0,
-      });
-    }
-
-    let dispatchedCount = 0;
-    for (const c of unassignedComplaints) {
-      const result = await autoAssignComplaint(c);
-      if (result.success) dispatchedCount++;
+    if (error) {
+      return res.status(500).json({ success: false, message: error });
     }
 
     res.status(200).json({
       success: true,
-      message: `Successfully auto-dispatched ${dispatchedCount} of ${unassignedComplaints.length} unassigned complaints to available verifiers.`,
+      message: `Successfully auto-dispatched ${dispatchedCount} complaints to available verifiers. Remaining in queue: ${remainingUnassigned}.`,
       dispatchedCount,
-      totalUnassigned: unassignedComplaints.length,
+      totalUnassigned: remainingUnassigned + dispatchedCount,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

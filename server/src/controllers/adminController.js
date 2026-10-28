@@ -3,6 +3,7 @@ import Department from '../models/Department.js';
 import User from '../models/User.js';
 import { getSlaState } from '../services/priorityService.js';
 import { CIVIC_TAXONOMY } from '../services/aiClassifierService.js';
+import { drainUnassignedQueueForDepartment } from '../services/dispatchService.js';
 
 // City-wide System Metrics (Matching Appendix I: /admin/metrics)
 export const getAdminMetrics = async (req, res) => {
@@ -322,6 +323,14 @@ export const createStaffUser = async (req, res) => {
       department,
       designation: defaultDesignation,
     });
+
+    // Autonomous Queue Draining: If a new verifier was registered, immediately
+    // dispatch any waiting complaints in their department.
+    if (role === 'verifier') {
+      drainUnassignedQueueForDepartment(department).catch(err =>
+        console.error('[Auto-Drain Trigger Error]', err.message)
+      );
+    }
 
     res.status(201).json({
       success: true,

@@ -3,6 +3,7 @@ import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import { getSlaState } from '../services/priorityService.js';
 import { uploadToCloudinary } from '../services/cloudinaryService.js';
+import { drainUnassignedQueueForDepartment } from '../services/dispatchService.js';
 
 // Get Complaints Assigned to the Logged-In Verifier
 export const getAssignedComplaints = async (req, res) => {
@@ -110,6 +111,14 @@ export const submitInspection = async (req, res) => {
       complaintId: complaint._id,
       trackingId: complaint.trackingId,
     });
+
+    // Autonomous Queue Draining: If task was resolved, verifier capacity is freed.
+    // Immediately drain the unassigned backlog for this department.
+    if (nextStatus === 'RESOLVED') {
+      drainUnassignedQueueForDepartment(complaint.department).catch(drainErr =>
+        console.error('[Auto-Drain Trigger Error]', drainErr.message)
+      );
+    }
 
     res.status(200).json({
       success: true,

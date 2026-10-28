@@ -130,6 +130,46 @@ export const seedDatabase = async () => {
       designation: 'Sanitary Inspector',
     });
 
+    const waterVerifier = await User.create({
+      name: 'S. Vetrivel',
+      email: 'verifier.water@civiceye.gov',
+      password: 'Verifier123!',
+      phone: '+91 9842100007',
+      role: 'verifier',
+      department: 'Water Supply',
+      designation: 'Field Inspector - Water Works',
+    });
+
+    const waterVerifier2 = await User.create({
+      name: 'M. Saravanan',
+      email: 'verifier.water2@civiceye.gov',
+      password: 'Verifier123!',
+      phone: '+91 9842100008',
+      role: 'verifier',
+      department: 'Water Supply',
+      designation: 'Junior Engineer - Water Works',
+    });
+
+    const elecVerifier = await User.create({
+      name: 'G. Prakash',
+      email: 'verifier.elec@civiceye.gov',
+      password: 'Verifier123!',
+      phone: '+91 9842100009',
+      role: 'verifier',
+      department: 'Streetlights & Electricity',
+      designation: 'Field Officer - Electrical Maintenance',
+    });
+
+    const safetyVerifier = await User.create({
+      name: 'R. Chandran',
+      email: 'verifier.safety@civiceye.gov',
+      password: 'Verifier123!',
+      phone: '+91 9842100010',
+      role: 'verifier',
+      department: 'Public Safety & Other Civic Hazards',
+      designation: 'Field Inspector - Civic Safety',
+    });
+
     // 4. Super Admin
     const admin = await User.create({
       name: 'Commissioner Office Admin',

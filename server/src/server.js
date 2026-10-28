@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import { seedDatabase } from './utils/seed.js';
+import { startPeriodicQueueSweeper } from './services/dispatchService.js';
 import User from './models/User.js';
 import Department from './models/Department.js';
 
@@ -112,6 +113,9 @@ const startServer = async () => {
       console.log(`  API Health: http://localhost:${PORT}/api/health`);
       console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`=======================================================`);
+
+      // Initialize autonomous queue sweeper
+      startPeriodicQueueSweeper(60000);
     });
   } catch (error) {
     console.error(`[CivicEye] Failed to start server: ${error.message}`);

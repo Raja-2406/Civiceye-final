@@ -93,9 +93,9 @@ export const createComplaint = async (req, res) => {
     // 1. AI-assisted Classification & Severity estimation
     const aiAnalysis = await classifyCivicIssue(title, description);
 
-    // Selected or AI category
-    const finalCategory = mainCategory || aiAnalysis.predictedCategory;
-    const finalSubcategory = subcategory || aiAnalysis.predictedSubcategory;
+    // Selected or AI auto-detected category
+    const finalCategory = (mainCategory && mainCategory !== 'AUTO') ? mainCategory : aiAnalysis.predictedCategory;
+    const finalSubcategory = (subcategory && subcategory !== 'AUTO') ? subcategory : aiAnalysis.predictedSubcategory;
     const assignedDepartment = CIVIC_TAXONOMY[finalCategory]?.department || 'Roads & Infrastructure';
 
     // 2. Deterministic Priority & SLA calculation

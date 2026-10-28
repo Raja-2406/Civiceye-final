@@ -18,7 +18,11 @@ import {
   Image as ImageIcon,
   CheckCircle,
   HelpCircle,
-  Maximize2
+  Maximize2,
+  Cpu,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal
 } from 'lucide-react';
 
 const TAXONOMY_OPTIONS = {
@@ -88,18 +92,52 @@ export default function ReportIncident() {
   // AI & Duplicate states
   const [isClassifying, setIsClassifying] = useState(false);
   const [aiResult, setAiResult] = useState(null);
+  const [isManualOverride, setIsManualOverride] = useState(false);
+  const [showManualOverride, setShowManualOverride] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [nearbyComplaints, setNearbyComplaints] = useState([]);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [duplicateDismissed, setDuplicateDismissed] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Update subcategories when main category changes
+  // Update subcategories when main category changes (if manual override)
   useEffect(() => {
     if (TAXONOMY_OPTIONS[mainCategory]) {
       setSubcategory(TAXONOMY_OPTIONS[mainCategory][0]);
     }
   }, [mainCategory]);
+
+  // Live real-time auto-classification based on description & title
+  useEffect(() => {
+    const combined = `${title} ${description}`.trim();
+    if (combined.length < 4) return;
+
+    const timer = setTimeout(async () => {
+      setIsClassifying(true);
+      try {
+        const res = await api.post('/complaints/classify-preview', {
+          title: title.trim(),
+          description: description.trim(),
+        });
+
+        if (res.data.success && res.data.aiResult) {
+          const result = res.data.aiResult;
+          setAiResult(result);
+          // If citizen hasn't explicitly overridden manually, auto-select the detected department & subcategory
+          if (!isManualOverride && TAXONOMY_OPTIONS[result.predictedCategory]) {
+            setMainCategory(result.predictedCategory);
+            setSubcategory(result.predictedSubcategory);
+          }
+        }
+      } catch (err) {
+        // silent fail for live classification
+      } finally {
+        setIsClassifying(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [title, description, isManualOverride]);
 
   // Live duplicate check whenever location or title changes
   useEffect(() => {
@@ -127,35 +165,6 @@ export default function ReportIncident() {
 
     return () => clearTimeout(timer);
   }, [title, description, locationData.latitude, locationData.longitude, mainCategory, duplicateDismissed]);
-
-  // Handle AI Auto-Classification assist
-  const handleAiAutoClassify = async () => {
-    if (!title.trim() && !description.trim()) {
-      alert('Please enter an incident title or narrative first for AI classification.');
-      return;
-    }
-
-    setIsClassifying(true);
-    try {
-      const res = await api.post('/complaints/classify-preview', {
-        title,
-        description,
-      });
-
-      if (res.data.success && res.data.aiResult) {
-        const result = res.data.aiResult;
-        setAiResult(result);
-        if (TAXONOMY_OPTIONS[result.predictedCategory]) {
-          setMainCategory(result.predictedCategory);
-          setSubcategory(result.predictedSubcategory);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsClassifying(false);
-    }
-  };
 
   // Image file handler
   const handleFileChange = (e) => {
@@ -285,7 +294,7 @@ export default function ReportIncident() {
                   1
                 </span>
                 <div>
-                  <strong className="text-slate-800">Incident Title:</strong> Concise description of the observed defect.
+                  <strong className="text-slate-800">Incident Narrative:</strong> Describe the observed issue. Department routing is handled automatically by the AI NLP engine.
                 </div>
               </div>
               <div className="flex space-x-2.5">
@@ -354,103 +363,152 @@ export default function ReportIncident() {
         {/* Right Column: Incident Submission Form (Figure 5.1) */}
         <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Title & AI Assist */}
+            {/* Title */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Incident Title *
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAiAutoClassify}
-                  disabled={isClassifying}
-                  className="flex items-center space-x-1.5 text-xs text-brand-600 hover:text-brand-700 font-semibold px-2.5 py-1 bg-brand-50 hover:bg-brand-100 rounded-lg transition"
-                >
-                  <Sparkles className={`w-3.5 h-3.5 ${isClassifying ? 'animate-spin' : ''}`} />
-                  <span>{isClassifying ? 'Analyzing NLP...' : 'AI Auto-Classify'}</span>
-                </button>
-              </div>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Incident Title *
+              </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Large Pothole Near Bus Stop, Broken Streetlight Pole..."
+                placeholder="Ex: Water pipe leaking on main road, Broken streetlight, Pothole crater..."
                 className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 required
               />
             </div>
 
-            {/* AI Classification Feedback Banner */}
-            {aiResult && (
-              <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sky-900 flex items-center space-x-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                    <span>AI Classifier Recommendation</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-200/60 text-sky-800">
-                    {Math.round(aiResult.confidenceScore * 100)}% Confidence
-                  </span>
-                </div>
-                <p className="text-sky-800 text-[11px]">{aiResult.explanation}</p>
-                <div className="text-[11px] text-sky-900 pt-1 flex items-center space-x-3">
-                  <span>Category: <strong>{aiResult.predictedCategory}</strong></span>
-                  <span>Subcategory: <strong>{aiResult.predictedSubcategory}</strong></span>
-                  <span>Severity: <strong>{aiResult.predictedSeverity}</strong></span>
-                </div>
-              </div>
-            )}
-
-            {/* Category and Subcategory (Figure 5.1) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Main Category *
-                </label>
-                <select
-                  value={mainCategory}
-                  onChange={(e) => setMainCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                >
-                  {Object.keys(TAXONOMY_OPTIONS).map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Subcategory *
-                </label>
-                <select
-                  value={subcategory}
-                  onChange={(e) => setSubcategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                >
-                  {TAXONOMY_OPTIONS[mainCategory]?.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Incident Narrative (Figure 5.1) */}
+            {/* Incident Narrative (Description) */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Incident Narrative *
+                Incident Narrative & Observed Fault *
               </label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Provide a clear description of the observed issue, affected public safety, landmarks..."
+                placeholder="Describe what you observed (e.g. 'Clean drinking water is bursting out of a cracked pipe and flooding the street near bus stand'). The department is automatically identified from this text."
                 className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 required
               />
+            </div>
+
+            {/* Automated Municipal Department Routing Card */}
+            <div className="p-4 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border border-sky-200 rounded-2xl space-y-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                      <span>Automated Department Routing</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 border border-brand-200">
+                        NLP Live Engine
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Municipal department is automatically determined from your description keywords
+                    </p>
+                  </div>
+                </div>
+
+                {isClassifying ? (
+                  <span className="text-[11px] font-semibold text-brand-600 flex items-center space-x-1 animate-pulse">
+                    <Cpu className="w-3.5 h-3.5 animate-spin" />
+                    <span className="hidden sm:inline">Analyzing...</span>
+                  </span>
+                ) : aiResult ? (
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{Math.round((aiResult.confidenceScore || 0.9) * 100)}% Match</span>
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Routed Details Banner */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl border border-sky-100 shadow-xs">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Routed Department</span>
+                  <span className="text-xs font-bold text-brand-700 block mt-0.5 truncate">
+                    {mainCategory}
+                  </span>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl border border-sky-100 shadow-xs">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Detected Category</span>
+                  <span className="text-xs font-bold text-slate-800 block mt-0.5 truncate">
+                    {subcategory}
+                  </span>
+                </div>
+                <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl border border-sky-100 shadow-xs">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Calculated Severity</span>
+                  <span className={`text-xs font-bold block mt-0.5 ${
+                    (aiResult?.predictedSeverity || 'MEDIUM') === 'CRITICAL' ? 'text-rose-600' :
+                    (aiResult?.predictedSeverity || 'MEDIUM') === 'HIGH' ? 'text-amber-600' : 'text-blue-600'
+                  }`}>
+                    {aiResult?.predictedSeverity || 'MEDIUM'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Optional Manual Override Toggle */}
+              <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-sky-200/60 text-xs">
+                <span className="text-[11px] text-slate-500 italic">
+                  {aiResult?.explanation || 'Automatic routing is active. You do not need to manually pick from dropdowns.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowManualOverride(!showManualOverride);
+                    setIsManualOverride(true);
+                  }}
+                  className="text-[11px] font-semibold text-brand-600 hover:text-brand-800 flex items-center space-x-1 shrink-0 self-start sm:self-auto"
+                >
+                  <SlidersHorizontal className="w-3 h-3" />
+                  <span>{showManualOverride ? 'Hide Manual Options' : 'Need to change department?'}</span>
+                  {showManualOverride ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              </div>
+
+              {/* Manual Override Dropdowns (Hidden by default, shown only if user clicks override) */}
+              {showManualOverride && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-white/95 p-3 rounded-xl border border-sky-200 animate-in fade-in">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Manual Department Override
+                    </label>
+                    <select
+                      value={mainCategory}
+                      onChange={(e) => {
+                        setMainCategory(e.target.value);
+                        setIsManualOverride(true);
+                      }}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    >
+                      {Object.keys(TAXONOMY_OPTIONS).map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Specific Subcategory
+                    </label>
+                    <select
+                      value={subcategory}
+                      onChange={(e) => {
+                        setSubcategory(e.target.value);
+                        setIsManualOverride(true);
+                      }}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    >
+                      {TAXONOMY_OPTIONS[mainCategory]?.map((sub) => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Geo-Location Section with Interactive Map (Figure 5.2) */}
