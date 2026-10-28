@@ -6,7 +6,7 @@ import {
   Search, 
   Filter, 
   ShieldAlert, 
-  Cpu, 
+  Users, 
   BarChart3, 
   AlertCircle, 
   CheckCircle2, 
@@ -93,11 +93,11 @@ export default function AdminDashboard() {
 
         <div className="flex items-center space-x-2">
           <Link
-            to="/admin/ai-review"
+            to="/admin/users"
             className="flex items-center space-x-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl border border-slate-200 transition"
           >
-            <Cpu className="w-4 h-4 text-brand-600" />
-            <span>AI Model Review</span>
+            <Users className="w-4 h-4 text-slate-700" />
+            <span>Manage Users</span>
           </Link>
           <Link
             to="/analytics"

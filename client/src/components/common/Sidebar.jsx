@@ -48,7 +48,6 @@ export default function Sidebar({ isOpen = false, onClose = () => {} }) {
     { name: 'City Overview', to: '/admin', icon: LayoutDashboard },
     { name: 'All Complaints', to: '/admin/complaints', icon: Inbox },
     { name: 'Civic Analytics', to: '/analytics', icon: BarChart3 },
-    { name: 'AI Model Review', to: '/admin/ai-review', icon: Cpu },
     { name: 'User Management', to: '/admin/users', icon: Users },
     { name: 'Help Center', to: '/help', icon: HelpCircle },
   ];

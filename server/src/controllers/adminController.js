@@ -349,3 +349,66 @@ export const createStaffUser = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Remove User (Super Admin)
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prevent deleting oneself
+    if (req.user._id.toString() === id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Security Restriction: You cannot remove your own Super Admin account.',
+      });
+    }
+
+    const userToDelete = await User.findById(id);
+    if (!userToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    // If the user being removed is an assigned field verifier, safely return their
+    // active complaints back to SUBMITTED so they can be re-dispatched.
+    if (userToDelete.role === 'verifier') {
+      const activeComplaints = await Complaint.find({
+        assignedVerifier: userToDelete._id,
+        status: { $in: ['ASSIGNED', 'IN_PROGRESS'] },
+      });
+
+      for (const comp of activeComplaints) {
+        comp.assignedVerifier = null;
+        comp.assignedVerifierName = 'Unassigned';
+        comp.status = 'SUBMITTED';
+        comp.statusHistory.push({
+          status: 'SUBMITTED',
+          note: `Verifier ${userToDelete.name} was removed from the system by Super Admin. Ticket returned to department queue for re-dispatch.`,
+          updatedBy: req.user._id,
+          updatedByName: req.user.name,
+          role: 'admin',
+          timestamp: new Date(),
+        });
+        await comp.save();
+      }
+
+      // Automatically re-dispatch any pending tickets in this department if other verifiers exist
+      if (userToDelete.department) {
+        drainUnassignedQueueForDepartment(userToDelete.department).catch(err =>
+          console.error('[Auto-Drain on Verifier Delete]', err.message)
+        );
+      }
+    }
+
+    await User.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: `User "${userToDelete.name}" (${userToDelete.email}) was removed successfully.`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
